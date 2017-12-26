@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # mancala.py
-# Modified: Mon 25 Dec 2017
+# Modified: Tue 26 Dec 2017
 
 import random
 import sys
@@ -26,6 +26,7 @@ class BeadCountError(Exception):
 class MancalaBucket():
     """Mancala game board bucket: 6 per side + scoring buckets."""
     def __init__(self, number, is_scoring, player):
+        """Initialize a MancalaBucket object."""
         self.number = number
         self.scoring = is_scoring
         self.next_bucket = None
@@ -33,6 +34,7 @@ class MancalaBucket():
         self.owner = player
 
     def __repr__(self):
+        """Define how a MancalaBucket is represented internally or by print()."""
         output_str = "Bucket number: {}\n".format(self.number)
         output_str += "Beads: {}\n".format(self.num_beads)
         output_str += "Scoring: {}\n".format(self.scoring)
@@ -40,6 +42,7 @@ class MancalaBucket():
         return output_str
 
     def __str__(self):
+        """Define how to turn a MancalaBucket object into a string."""
         output_str = "Bucket number: {}\n".format(self.number)
         output_str += "Beads: {}\n".format(self.num_beads)
         output_str += "Scoring: {}\n".format(self.scoring)
@@ -47,6 +50,7 @@ class MancalaBucket():
         return output_str
 
     def __cmp__(self, other):
+        """Define how to compare two MancalaBucket objects."""
         if self.num_beads < other.num_beads:
             return -1
         elif self.num_beads > other.num_beads:
@@ -82,6 +86,7 @@ class MancalaBucket():
 class MancalaBoard():
     """Mancala game board object."""
     def __init__(self, starting_beads):
+        """Initialize the board and make all required MancalaBucket objects."""
         self.buckets = []
         self.opposite_map = {}
         self.p1_scoring_bucket = None
@@ -95,7 +100,6 @@ class MancalaBoard():
             self.buckets.append(bucket)
         scoring_bucket_p1 = MancalaBucket(-1, True, 1)
         self.buckets[-1].set_next_bucket(scoring_bucket_p1)
-        # self.buckets.append(scoring_bucket_p1)
         self.p1_scoring_bucket = scoring_bucket_p1
         # player 2 non-scoring buckets
         for i in range(6, 12):
@@ -106,7 +110,6 @@ class MancalaBoard():
         scoring_bucket_p2 = MancalaBucket(-2, True, 2)
         self.buckets[-1].set_next_bucket(scoring_bucket_p2)
         scoring_bucket_p2.set_next_bucket(self.buckets[0])
-        # self.buckets.append(scoring_bucket_p2)
         self.p2_scoring_bucket = scoring_bucket_p2
         # Now set up the opposites_map
         non_scoring_buckets = [bucket for bucket in self.buckets if not bucket.scoring]
@@ -121,12 +124,11 @@ class MancalaBoard():
             raise MoveError
         while beads:
             bucket = bucket.next_bucket
-            # DEBUG - bucket_debug_info(bucket)
             if bucket.scoring and bucket.owner == player:
                 continue
             bucket.add_bead()
             beads -= 1
-        # Perform take
+        # Perform take -- Only do take if last bead placed in an empty bucket
         if bucket.owner == player and bucket.num_beads == 1:
             opposite = self.opposite_map[bucket.number]
             if opposite.num_beads:
@@ -134,7 +136,6 @@ class MancalaBoard():
                     self.p1_scoring_bucket.add_beads(opposite.get_beads())
                 if player == 2:
                     self.p2_scoring_bucket.add_beads(opposite.get_beads())
-        return
 
     def get_opposite(self, bucket_index):
         """Get the bucket opposite of a particular index."""
@@ -163,6 +164,7 @@ def print_bucket(bucket, endl=''):
 
 
 def display_mancala_board(mancala_board):
+    """Used to print the board state."""
     p1_buckets = [bucket for bucket in mancala_board.buckets
                   if bucket.owner is 1 and not bucket.scoring]
     p2_buckets = [bucket for bucket in mancala_board.buckets
@@ -192,10 +194,16 @@ def handle_victory(mancala_board):
     sys.exit(0)
 
 
-def find_best_move(mancala_board):
+def find_best_move(mancala_board, difficulty='easy'):
     """Used by the computer to determine its move."""
-    # TODO: Write this
-    return random.choice([7, 8, 9, 10, 11, 12])
+    if difficulty == 'easy':
+        return random.choice([7, 8, 9, 10, 11, 12])
+    elif difficulty == 'medium':
+        # TODO: Write this
+        return random.choice([7, 8, 9, 10, 11, 12])
+    else:  # difficulty == 'hard'
+        # TODO: Write this
+        return random.choice([7, 8, 9, 10, 11, 12])
 
 
 def validate_move(move):
@@ -211,7 +219,9 @@ def validate_move(move):
 
 
 def simulate_thinking(wait_len=6):
-    """Pretend the computer is thinking. Default is 6 seconds."""
+    """
+    Pretend the computer is thinking. Default is 3 seconds. wait_len in half seconds.
+    """
     for i in range(wait_len):
         sleep(0.5)
         print('.', end='')
@@ -220,6 +230,9 @@ def simulate_thinking(wait_len=6):
 
 
 def two_player_game():
+    """
+    Run a two-player game, where each player is a human.
+    """
     mancala_board = MancalaBoard(4)
     turn = 1
     display_mancala_board(mancala_board)
@@ -240,9 +253,6 @@ def two_player_game():
                 move = 7 - move  # Reverse the order of the buckets so its easier to use
                 mancala_board.move((move+5), turn)
                 turn = 1
-        # DEBUG
-        #except IndexError:
-        #    print(move)
         except ValueError:
             continue
         except MoveError:
