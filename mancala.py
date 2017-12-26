@@ -261,7 +261,7 @@ def two_player_game():
         display_mancala_board(mancala_board)
 
 
-def single_player_game():
+def single_player_game(difficulty):
     """
     Run a single player game, w/ the opponent managed by the computer.
     """
@@ -286,7 +286,7 @@ def single_player_game():
         simulate_thinking(6)
         not_moved = True
         while not_moved:
-            move = find_best_move(mancala_board)
+            move = find_best_move(mancala_board, difficulty)
             try:
                 mancala_board.move(move-1, 2)
                 not_moved = False
@@ -304,9 +304,13 @@ def main():
     while True:
         players = input("Choose number of players: [1 or 2]\n\n> ")
         try:
-            assert int(players) in [1, 2]
-            if int(players) is 1:
-                single_player_game()
+            players = int(players)
+            assert players in [1, 2]
+            if players is 1:
+                difficulty = input("\nChoose difficulty: [easy, medium, or hard]\n\n> ")
+                assert difficulty.lower() in ['easy', 'medium', 'hard']
+                print('\n')
+                single_player_game(difficulty.lower())
             else:
                 two_player_game()
         except (AssertionError, ValueError):
