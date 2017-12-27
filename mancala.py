@@ -3,13 +3,18 @@
 #
 # mancala.py
 # Modified: Tue 26 Dec 2017
+"""
+Play the board game mancala on the terminal.
+Can be played with two-players or with one player,
+versus the computer.
+"""
 
 import random
 import sys
 from time import sleep
 
 __description__ = "Play mancala in the terminal."
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "Elliott Indiran <eindiran@uchicago.edu>"
 
 
@@ -55,8 +60,7 @@ class MancalaBucket():
             return -1
         elif self.num_beads > other.num_beads:
             return 1
-        else:
-            return 0
+        return 0
 
     def set_next_bucket(self, next_bucket):
         """Set the bucket that follows current bucket."""
@@ -72,7 +76,7 @@ class MancalaBucket():
 
     def add_beads(self, n):
         """Adds n bead to the mancala bucket object."""
-        if type(n) is not int:
+        if not isinstance(n, int):
             raise BeadCountError("The number of beads must be a positive integer or zero.")
         if n < 0:
             raise BeadCountError("The number of beads must be a positive integer or zero.")
@@ -95,7 +99,7 @@ class MancalaBoard():
         for i in range(6):
             bucket = MancalaBucket(i, False, 1)
             bucket.add_beads(starting_beads)  # Populate with initial beads
-            if (i != 0):
+            if i != 0:
                 self.buckets[i-1].set_next_bucket(bucket)
             self.buckets.append(bucket)
         scoring_bucket_p1 = MancalaBucket(-1, True, 1)
@@ -142,6 +146,7 @@ class MancalaBoard():
         return self.opposites_map[bucket_index]
 
     def check_victory(self):
+        """Determine if the current board state has resulted in the game ending."""
         beads_p1 = sum([bucket.num_beads for bucket in self.buckets
                         if bucket.owner == 1 and not bucket.scoring])
         beads_p2 = sum([bucket.num_beads for bucket in self.buckets
@@ -154,8 +159,7 @@ class MancalaBoard():
             return 1
         elif self.p2_scoring_bucket.num_beads > self.p1_scoring_bucket.num_beads:
             return 2
-        else:
-            return 0
+        return 0
 
 
 def print_bucket(bucket, endl=''):
@@ -166,9 +170,9 @@ def print_bucket(bucket, endl=''):
 def display_mancala_board(mancala_board):
     """Used to print the board state."""
     p1_buckets = [bucket for bucket in mancala_board.buckets
-                  if bucket.owner is 1 and not bucket.scoring]
+                  if bucket.owner == 1 and not bucket.scoring]
     p2_buckets = [bucket for bucket in mancala_board.buckets
-                  if bucket.owner is 2 and not bucket.scoring]
+                  if bucket.owner == 2 and not bucket.scoring]
     print("-------", end=' ')
     for bucket in p1_buckets:
         print_bucket(bucket, ' ')
@@ -185,9 +189,9 @@ def display_mancala_board(mancala_board):
 def handle_victory(mancala_board):
     """Handle a victory."""
     winner = mancala_board.player_ahead()
-    if winner is 1:
+    if winner == 1:
         print("Player 1 wins!")
-    elif winner is 2:
+    elif winner == 2:
         print("Player 2 wins!")
     else:
         print("Tie game!")
@@ -196,14 +200,12 @@ def handle_victory(mancala_board):
 
 def find_best_move(mancala_board, difficulty='easy'):
     """Used by the computer to determine its move."""
+    # TODO: Write medium and hard  # pylint: disable=W0511
     if difficulty == 'easy':
         return random.choice([7, 8, 9, 10, 11, 12])
     elif difficulty == 'medium':
-        # TODO: Write this
         return random.choice([7, 8, 9, 10, 11, 12])
-    else:  # difficulty == 'hard'
-        # TODO: Write this
-        return random.choice([7, 8, 9, 10, 11, 12])
+    return random.choice([7, 8, 9, 10, 11, 12])  # difficulty == 'hard'
 
 
 def validate_move(move):
@@ -222,7 +224,7 @@ def simulate_thinking(wait_len=6):
     """
     Pretend the computer is thinking. Default is 3 seconds. wait_len in half seconds.
     """
-    for i in range(wait_len):
+    for i in range(wait_len):  # pylint: disable=W0612
         sleep(0.5)
         print('.', end='')
         sys.stdout.flush()
@@ -239,14 +241,14 @@ def two_player_game():
     while True:
         if mancala_board.check_victory():
             handle_victory(mancala_board)
-        if turn is 1:
+        if turn == 1:
             print("[Player One] - ", end='')
-        if turn is 2:
+        if turn == 2:
             print("[Player Two] - ", end='')
         move = input("Choose which bucket to move:\n\n> ")
         try:
             move = validate_move(move)
-            if turn is 1:
+            if turn == 1:
                 mancala_board.move(move-1, turn)
                 turn = 2
             else:
@@ -306,7 +308,7 @@ def main():
         try:
             players = int(players)
             assert players in [1, 2]
-            if players is 1:
+            if players == 1:
                 difficulty = input("\nChoose difficulty: [easy, medium, or hard]\n\n> ")
                 assert difficulty.lower() in ['easy', 'medium', 'hard']
                 print('\n')
