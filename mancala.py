@@ -121,7 +121,9 @@ class MancalaBoard():
             self.opposite_map[bucket.number] = non_scoring_buckets[11 - bucket.number]
 
     def move(self, bucket_index, player):
-        """Performs a single move."""
+        """
+        Performs a single move. Returns True if player may take another turn.
+        """
         bucket = self.buckets[bucket_index]
         beads = bucket.get_beads()
         if not beads:
@@ -132,14 +134,17 @@ class MancalaBoard():
                 continue
             bucket.add_bead()
             beads -= 1
+        if bucket.scoring:
+            return True  # take another turn
         # Perform take -- Only do take if last bead placed in an empty bucket
-        if bucket.owner == player and bucket.num_beads == 1:
+        elif bucket.owner == player and bucket.num_beads == 1:
             opposite = self.opposite_map[bucket.number]
             if opposite.num_beads:
                 if player == 1:
                     self.p1_scoring_bucket.add_beads(opposite.get_beads())
                 if player == 2:
                     self.p2_scoring_bucket.add_beads(opposite.get_beads())
+        return False
 
     def get_opposite(self, bucket_index):
         """Get the bucket opposite of a particular index."""
@@ -249,11 +254,13 @@ def two_player_game():
         try:
             move = validate_move(move)
             if turn == 1:
-                mancala_board.move(move-1, turn)
+                if mancala_board.move(move-1, turn):
+                    continue
                 turn = 2
             else:
                 move = 7 - move  # Reverse the order of the buckets so its easier to use
-                mancala_board.move((move+5), turn)
+                if mancala_board.move((move+5), turn):
+                    continue
                 turn = 1
         except ValueError:
             continue
@@ -276,7 +283,9 @@ def single_player_game(difficulty):
         move = input("Choose which bucket to move:\n\n> ")
         try:
             move = validate_move(move)
-            mancala_board.move(move-1, 1)
+            if mancala_board.move(move-1, 1):
+                display_mancala_board(mancala_board)
+                continue
         except ValueError:  # raised by validate_move()
             continue
         except MoveError:
@@ -288,9 +297,13 @@ def single_player_game(difficulty):
         simulate_thinking(6)
         not_moved = True
         while not_moved:
+            if mancala_board.check_victory():  # check for game end after each player's turn
+                handle_victory(mancala_board)
             move = find_best_move(mancala_board, difficulty)
             try:
-                mancala_board.move(move-1, 2)
+                if mancala_board.move(move-1, 2):
+                    display_mancala_board(mancala_board)
+                    continue
                 not_moved = False
             except MoveError:
                 continue
