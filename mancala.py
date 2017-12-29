@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # mancala.py
-# Modified: Tue 26 Dec 2017
+# Modified: Thu 28 Dec 2017
 """
 Play the board game mancala on the terminal.
 Can be played with two-players or with one player,
@@ -14,7 +14,7 @@ import sys
 from time import sleep
 
 __description__ = "Play mancala in the terminal."
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __author__ = "Elliott Indiran <eindiran@uchicago.edu>"
 
 
@@ -74,51 +74,54 @@ class MancalaBucket():
         self.num_beads = 0
         return beads
 
-    def add_beads(self, n):
-        """Adds n bead to the mancala bucket object."""
-        if not isinstance(n, int):
+    def add_beads(self, num_beads):
+        """Adds num_beads to the mancala bucket object."""
+        if not isinstance(num_beads, int):
             raise BeadCountError("The number of beads must be a positive integer or zero.")
-        if n < 0:
+        if num_beads < 0:
             raise BeadCountError("The number of beads must be a positive integer or zero.")
-        self.num_beads += n
+        self.num_beads += num_beads
 
     def add_bead(self):
-        """Add a bead to the mancala bucket object."""
+        """Add a single bead to the mancala bucket object."""
         self.add_beads(1)
 
 
 class MancalaBoard():
     """Mancala game board object."""
-    def __init__(self, starting_beads):
+    def __init__(self, starting_beads, num_buckets_per_player=6):
         """Initialize the board and make all required MancalaBucket objects."""
         self.buckets = []
         self.opposite_map = {}
         self.p1_scoring_bucket = None
         self.p2_scoring_bucket = None
-        # player one non-scoring buckets
-        for i in range(6):
+        # player 1 non-scoring buckets
+        for i in range(num_buckets_per_player):
             bucket = MancalaBucket(i, False, 1)
             bucket.add_beads(starting_beads)  # Populate with initial beads
             if i != 0:
                 self.buckets[i-1].set_next_bucket(bucket)
             self.buckets.append(bucket)
-        scoring_bucket_p1 = MancalaBucket(-1, True, 1)
-        self.buckets[-1].set_next_bucket(scoring_bucket_p1)
-        self.p1_scoring_bucket = scoring_bucket_p1
+        # player 2 scoring bucket
+        scoring_bucket_p2 = MancalaBucket(-2, True, 2)
+        self.buckets[-1].set_next_bucket(scoring_bucket_p2)
+        self.p2_scoring_bucket = scoring_bucket_p2
         # player 2 non-scoring buckets
-        for i in range(6, 12):
+        for i in range(num_buckets_per_player, 2*num_buckets_per_player):
             bucket = MancalaBucket(i, False, 2)
             bucket.add_beads(starting_beads)
             self.buckets[-1].set_next_bucket(bucket)
             self.buckets.append(bucket)
-        scoring_bucket_p2 = MancalaBucket(-2, True, 2)
-        self.buckets[-1].set_next_bucket(scoring_bucket_p2)
-        scoring_bucket_p2.set_next_bucket(self.buckets[0])
-        self.p2_scoring_bucket = scoring_bucket_p2
+        # player 1 scoring bucket
+        scoring_bucket_p1 = MancalaBucket(-1, True, 1)
+        self.buckets[-1].set_next_bucket(scoring_bucket_p1)
+        scoring_bucket_p1.set_next_bucket(self.buckets[0])  # close loop
+        self.p1_scoring_bucket = scoring_bucket_p1
         # Now set up the opposites_map
         non_scoring_buckets = [bucket for bucket in self.buckets if not bucket.scoring]
         for bucket in non_scoring_buckets:
-            self.opposite_map[bucket.number] = non_scoring_buckets[11 - bucket.number]
+            self.opposite_map[bucket.number] = non_scoring_buckets[(2*num_buckets_per_player-1)
+                                                                   - bucket.number]
 
     def move(self, bucket_index, player):
         """
@@ -148,14 +151,17 @@ class MancalaBoard():
 
     def get_opposite(self, bucket_index):
         """Get the bucket opposite of a particular index."""
-        return self.opposites_map[bucket_index]
+        return self.opposite_map[bucket_index]
+
+    def get_buckets_for_player(self, player):
+        """Return a list of MancalaBuckets for a given player."""
+        return [bucket for bucket in self.buckets if bucket.owner == player
+                and not bucket.scoring]
 
     def check_victory(self):
         """Determine if the current board state has resulted in the game ending."""
-        beads_p1 = sum([bucket.num_beads for bucket in self.buckets
-                        if bucket.owner == 1 and not bucket.scoring])
-        beads_p2 = sum([bucket.num_beads for bucket in self.buckets
-                        if bucket.owner == 2 and not bucket.scoring])
+        beads_p1 = sum([bucket.num_beads for bucket in self.get_buckets_for_player(1)])
+        beads_p2 = sum([bucket.num_beads for bucket in self.get_buckets_for_player(2)])
         return beads_p1 == 0 or beads_p2 == 0
 
     def player_ahead(self):
@@ -206,6 +212,8 @@ def handle_victory(mancala_board):
 def find_best_move(mancala_board, difficulty='easy'):
     """Used by the computer to determine its move."""
     # TODO: Write medium and hard  # pylint: disable=W0511
+    if not mancala_board:
+        raise MoveError("Cannot move: did not receive a valid MancalaBoard object.")
     if difficulty == 'easy':
         return random.choice([7, 8, 9, 10, 11, 12])
     elif difficulty == 'medium':
