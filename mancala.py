@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # mancala.py
-# Modified: Thu 28 Dec 2017
+# Modified: Sat 30 Dec 2017
 """
 Play the board game mancala on the terminal.
 Can be played with two-players or with one player,
@@ -14,7 +14,7 @@ import sys
 from time import sleep
 
 __description__ = "Play mancala in the terminal."
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __author__ = "Elliott Indiran <eindiran@uchicago.edu>"
 
 
@@ -133,7 +133,7 @@ class MancalaBoard():
             raise MoveError
         while beads:
             bucket = bucket.next_bucket
-            if bucket.scoring and bucket.owner == player:
+            if bucket.scoring and bucket.owner != player:
                 continue
             bucket.add_bead()
             beads -= 1
