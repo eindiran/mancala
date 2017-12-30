@@ -14,7 +14,7 @@ import sys
 from time import sleep
 
 __description__ = "Play mancala in the terminal."
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __author__ = "Elliott Indiran <eindiran@uchicago.edu>"
 
 
@@ -149,6 +149,31 @@ class MancalaBoard():
                     self.p2_scoring_bucket.add_beads(opposite.get_beads())
         return False
 
+    def simulate_move(self, bucket_index, player):
+        """Simulate a move without changing the state of the board."""
+        move_results = [0, 0]  # Keep track of:
+        # Does this move initiate a second move?
+        # How many points does it generate
+        bucket = self.buckets[bucket_index-1]
+        beads = bucket.num_beads
+        initial_beads = beads
+        if not beads:
+            return -1
+        while beads:
+            bucket = bucket.next_bucket
+            if bucket.scoring and bucket.owner != player:
+                continue
+            beads -= 1
+        if bucket.scoring:
+            move_results[0] = 3  # extra turn expected bead value
+            move_results[1] = initial_beads//len(self.buckets)
+            return sum(move_results)
+        if bucket.num_beads == 0:
+            opposite = self.opposite_map[bucket.number]
+            move_results[1] = opposite.num_beads
+            return sum(move_results)
+        return sum(move_results)
+
     def get_opposite(self, bucket_index):
         """Get the bucket opposite of a particular index."""
         return self.opposite_map[bucket_index]
@@ -214,14 +239,22 @@ def find_best_move(mancala_board, difficulty='easy'):
     # TODO: Write medium and hard  # pylint: disable=W0511
     if not mancala_board:
         raise MoveError("Cannot move: did not receive a valid MancalaBoard object.")
-    if difficulty == 'easy':
+    if difficulty in ['easy', 'medium']:
         moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
         return random.choice(moves)
-    elif difficulty == 'medium':
+    elif difficulty == 'hard':
+        moves_dict = {}
+        player = 2
         moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
-        return random.choice(moves)
-    moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
-    return random.choice(moves)
+        for bucket_index in moves:
+            moves_dict[bucket_index] = mancala_board.simulate_move(bucket_index, player)
+        return evaluate_moves_dict(moves_dict)
+    raise ValueError("Bad difficulty value.")
+
+
+def evaluate_moves_dict(moves_dict):
+    """Takes a moves dict and returns the bucket index of the best."""
+    return max(moves_dict, key=moves_dict.get)
 
 
 def validate_move(move):
