@@ -215,10 +215,13 @@ def find_best_move(mancala_board, difficulty='easy'):
     if not mancala_board:
         raise MoveError("Cannot move: did not receive a valid MancalaBoard object.")
     if difficulty == 'easy':
-        return random.choice([7, 8, 9, 10, 11, 12])
+        moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
+        return random.choice(moves)
     elif difficulty == 'medium':
-        return random.choice([7, 8, 9, 10, 11, 12])
-    return random.choice([7, 8, 9, 10, 11, 12])  # difficulty == 'hard'
+        moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
+        return random.choice(moves)
+    moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
+    return random.choice(moves)
 
 
 def validate_move(move):
@@ -228,6 +231,7 @@ def validate_move(move):
     try:
         move = int(move)
         assert move in [1, 2, 3, 4, 5, 6]
+        # TODO: make this work with Kalah(X,Y) # pylint: disable=W0511
     except (ValueError, AssertionError):
         raise ValueError("Choose a value in [1-6]. Please try again.")
     return move
