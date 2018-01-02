@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # mancala.py
-# Modified: Sat 30 Dec 2017
+# Modified: Tue 02 Jan 2018
 """
 Play the board game mancala on the terminal.
 Can be played with two-players or with one player,
@@ -262,6 +262,9 @@ def validate_move(move):
     Takes user input and validates it, returning the result if valid.
     """
     try:
+        if move in ['q', 'quit', 'exit']:
+            print("\n\nGoodbye!")
+            sys.exit(0)
         move = int(move)
         assert move in [1, 2, 3, 4, 5, 6]
         # TODO: make this work with Kalah(X,Y) # pylint: disable=W0511
