@@ -234,15 +234,15 @@ def handle_victory(mancala_board):
     sys.exit(0)
 
 
-def find_best_move(mancala_board, difficulty='easy'):
+def find_best_move(mancala_board, difficulty='e'):
     """Used by the computer to determine its move."""
     # TODO: Write medium and hard  # pylint: disable=W0511
     if not mancala_board:
         raise MoveError("Cannot move: did not receive a valid MancalaBoard object.")
-    if difficulty in ['easy', 'medium']:
+    if difficulty in ['e', 'm']:
         moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
         return random.choice(moves)
-    elif difficulty == 'hard':
+    elif difficulty == 'h':
         moves_dict = {}
         player = 2
         moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
@@ -367,13 +367,19 @@ def main():
     while True:
         players = input("Choose number of players: [1 or 2]\n\n> ")
         try:
+            if players in ['q', 'quit', 'exit']:
+                print("\n\nGoodbye!")
+                sys.exit(0)
             players = int(players)
             assert players in [1, 2]
             if players == 1:
                 difficulty = input("\nChoose difficulty: [easy, medium, or hard]\n\n> ")
-                assert difficulty.lower() in ['easy', 'medium', 'hard']
+                if difficulty in ['q', 'quit', 'exit']:
+                    print("\n\nGoodbye!")
+                    sys.exit(0)
+                assert difficulty.lower() in ['easy', 'e', 'medium', 'medium', 'hard', 'h']
                 print('\n')
-                single_player_game(difficulty.lower())
+                single_player_game(difficulty.lower()[0])
             else:
                 two_player_game()
         except (AssertionError, ValueError):
