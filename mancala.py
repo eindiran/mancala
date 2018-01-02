@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # mancala.py
-# Modified: Sat 30 Dec 2017
+# Modified: Tue 02 Jan 2018
 """
 Play the board game mancala on the terminal.
 Can be played with two-players or with one player,
@@ -234,15 +234,15 @@ def handle_victory(mancala_board):
     sys.exit(0)
 
 
-def find_best_move(mancala_board, difficulty='easy'):
+def find_best_move(mancala_board, difficulty='e'):
     """Used by the computer to determine its move."""
     # TODO: Write medium and hard  # pylint: disable=W0511
     if not mancala_board:
         raise MoveError("Cannot move: did not receive a valid MancalaBoard object.")
-    if difficulty in ['easy', 'medium']:
+    if difficulty in ['e', 'm']:
         moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
         return random.choice(moves)
-    elif difficulty == 'hard':
+    elif difficulty == 'h':
         moves_dict = {}
         player = 2
         moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
@@ -262,6 +262,9 @@ def validate_move(move):
     Takes user input and validates it, returning the result if valid.
     """
     try:
+        if move in ['q', 'quit', 'exit']:
+            print("\n\nGoodbye!")
+            sys.exit(0)
         move = int(move)
         assert move in [1, 2, 3, 4, 5, 6]
         # TODO: make this work with Kalah(X,Y) # pylint: disable=W0511
@@ -364,13 +367,19 @@ def main():
     while True:
         players = input("Choose number of players: [1 or 2]\n\n> ")
         try:
+            if players in ['q', 'quit', 'exit']:
+                print("\n\nGoodbye!")
+                sys.exit(0)
             players = int(players)
             assert players in [1, 2]
             if players == 1:
                 difficulty = input("\nChoose difficulty: [easy, medium, or hard]\n\n> ")
-                assert difficulty.lower() in ['easy', 'medium', 'hard']
+                if difficulty in ['q', 'quit', 'exit']:
+                    print("\n\nGoodbye!")
+                    sys.exit(0)
+                assert difficulty.lower() in ['easy', 'e', 'medium', 'medium', 'hard', 'h']
                 print('\n')
-                single_player_game(difficulty.lower())
+                single_player_game(difficulty.lower()[0])
             else:
                 two_player_game()
         except (AssertionError, ValueError):
