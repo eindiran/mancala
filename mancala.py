@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # mancala.py
-# Modified: Sat 30 Dec 2017
+# Modified: Tue 02 Jan 2018
 """
 Play the board game mancala on the terminal.
 Can be played with two-players or with one player,
@@ -14,7 +14,7 @@ import sys
 from time import sleep
 
 __description__ = "Play mancala in the terminal."
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __author__ = "Elliott Indiran <eindiran@uchicago.edu>"
 
 
@@ -149,6 +149,31 @@ class MancalaBoard():
                     self.p2_scoring_bucket.add_beads(opposite.get_beads())
         return False
 
+    def simulate_move(self, bucket_index, player):
+        """Simulate a move without changing the state of the board."""
+        move_results = [0, 0]  # Keep track of:
+        # Does this move initiate a second move?
+        # How many points does it generate
+        bucket = self.buckets[bucket_index-1]
+        beads = bucket.num_beads
+        initial_beads = beads
+        if not beads:
+            return -1
+        while beads:
+            bucket = bucket.next_bucket
+            if bucket.scoring and bucket.owner != player:
+                continue
+            beads -= 1
+        if bucket.scoring:
+            move_results[0] = 3  # extra turn expected bead value
+            move_results[1] = initial_beads//len(self.buckets)
+            return sum(move_results)
+        if bucket.num_beads == 0:
+            opposite = self.opposite_map[bucket.number]
+            move_results[1] = opposite.num_beads
+            return sum(move_results)
+        return sum(move_results)
+
     def get_opposite(self, bucket_index):
         """Get the bucket opposite of a particular index."""
         return self.opposite_map[bucket_index]
@@ -209,16 +234,27 @@ def handle_victory(mancala_board):
     sys.exit(0)
 
 
-def find_best_move(mancala_board, difficulty='easy'):
+def find_best_move(mancala_board, difficulty='e'):
     """Used by the computer to determine its move."""
     # TODO: Write medium and hard  # pylint: disable=W0511
     if not mancala_board:
         raise MoveError("Cannot move: did not receive a valid MancalaBoard object.")
-    if difficulty == 'easy':
-        return random.choice([7, 8, 9, 10, 11, 12])
-    elif difficulty == 'medium':
-        return random.choice([7, 8, 9, 10, 11, 12])
-    return random.choice([7, 8, 9, 10, 11, 12])  # difficulty == 'hard'
+    if difficulty in ['e', 'm']:
+        moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
+        return random.choice(moves)
+    elif difficulty == 'h':
+        moves_dict = {}
+        player = 2
+        moves = [i+1 for i in range(len(mancala_board.buckets)//2, len(mancala_board.buckets))]
+        for bucket_index in moves:
+            moves_dict[bucket_index] = mancala_board.simulate_move(bucket_index, player)
+        return evaluate_moves_dict(moves_dict)
+    raise ValueError("Bad difficulty value.")
+
+
+def evaluate_moves_dict(moves_dict):
+    """Takes a moves dict and returns the bucket index of the best."""
+    return max(moves_dict, key=moves_dict.get)
 
 
 def validate_move(move):
@@ -226,8 +262,12 @@ def validate_move(move):
     Takes user input and validates it, returning the result if valid.
     """
     try:
+        if move in ['q', 'quit', 'exit']:
+            print("\n\nGoodbye!")
+            sys.exit(0)
         move = int(move)
         assert move in [1, 2, 3, 4, 5, 6]
+        # TODO: make this work with Kalah(X,Y) # pylint: disable=W0511
     except (ValueError, AssertionError):
         raise ValueError("Choose a value in [1-6]. Please try again.")
     return move
@@ -327,13 +367,19 @@ def main():
     while True:
         players = input("Choose number of players: [1 or 2]\n\n> ")
         try:
+            if players in ['q', 'quit', 'exit']:
+                print("\n\nGoodbye!")
+                sys.exit(0)
             players = int(players)
             assert players in [1, 2]
             if players == 1:
                 difficulty = input("\nChoose difficulty: [easy, medium, or hard]\n\n> ")
-                assert difficulty.lower() in ['easy', 'medium', 'hard']
+                if difficulty in ['q', 'quit', 'exit']:
+                    print("\n\nGoodbye!")
+                    sys.exit(0)
+                assert difficulty.lower() in ['easy', 'e', 'medium', 'medium', 'hard', 'h']
                 print('\n')
-                single_player_game(difficulty.lower())
+                single_player_game(difficulty.lower()[0])
             else:
                 two_player_game()
         except (AssertionError, ValueError):
